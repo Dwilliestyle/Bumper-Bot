@@ -16,7 +16,7 @@
   <depend>hardware_interface</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>pluginlib</depend>
-  <depend>libserial-dev</depend>
+  <depend>libgpiod-dev</depend>
 
   <exec_depend>python3-serial</exec_depend>
   <exec_depend>python3-smbus</exec_depend>

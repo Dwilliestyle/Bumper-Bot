@@ -3,9 +3,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <hardware_interface/system_interface.hpp>
-#include <libserial/SerialPort.h>
 #include <rclcpp_lifecycle/state.hpp>
 #include <rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp>
+#include <bumperbot_firmware/motor.hpp>
 
 #include <vector>
 #include <string>
@@ -34,8 +34,20 @@ public:
   hardware_interface::return_type write(const rclcpp::Time &, const rclcpp::Duration &) override;
 
 private:
-  LibSerial::SerialPort arduino_;
-  std::string port_;
+  static const int LEFT_MOTOR_IN1 = 17;
+  static const int LEFT_MOTOR_IN2 = 27;
+  static const int LEFT_MOTOR_ENA = 18;
+  static const int LEFT_MOTOR_ENC_A = 23;
+  static const int LEFT_MOTOR_ENC_B = 24;
+
+  static const int RIGHT_MOTOR_IN1 = 5;
+  static const int RIGHT_MOTOR_IN2 = 6;
+  static const int RIGHT_MOTOR_ENA = 12;
+  static const int RIGHT_MOTOR_ENC_A = 25;
+  static const int RIGHT_MOTOR_ENC_B = 66;
+
+  std::unique_ptr<bumperbot_firmware::Motor> left_motor_;
+  std::unique_ptr<bumperbot_firmware::Motor> right_motor_;
   std::vector<double> velocity_commands_;
   std::vector<double> position_states_;
   std::vector<double> velocity_states_;

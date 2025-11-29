@@ -14,20 +14,24 @@ find_package(std_msgs REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
-find_package(PkgConfig)
-pkg_check_modules(SERIAL libserial)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GPIOD REQUIRED libgpiodcxx)
 
 ament_python_install_package(${PROJECT_NAME})
 
 add_library(${PROJECT_NAME} SHARED 
   src/bumperbot_interface.cpp
+  src/motor.cpp
+  src/pwm_manager.cpp
+  src/digital_out.cpp
+  src/encoder.cpp
 )
-target_include_directories(${PROJECT_NAME} PRIVATE 
+target_include_directories(${PROJECT_NAME} PUBLIC 
   include
-  "${SERIAL_INCLUDE_DIRS}"
+  "${GPIOD_INCLUDE_DIRS}"
 )
 target_link_libraries(${PROJECT_NAME}
- "${SERIAL_LDFLAGS}")
+ "${GPIOD_LDFLAGS}")
 ament_target_dependencies(${PROJECT_NAME}
   hardware_interface
   pluginlib
@@ -37,19 +41,9 @@ ament_target_dependencies(${PROJECT_NAME}
 
 pluginlib_export_plugin_description_file(hardware_interface bumperbot_interface.xml)
 
-add_executable(simple_serial_receiver src/simple_serial_receiver.cpp)
-ament_target_dependencies(simple_serial_receiver rclcpp std_msgs)
-target_include_directories(simple_serial_receiver PUBLIC
- "${SERIAL_INCLUDE_DIRS}")
-target_link_libraries(simple_serial_receiver
- "${SERIAL_LDFLAGS}")
-
-add_executable(simple_serial_transmitter src/simple_serial_transmitter.cpp)
-ament_target_dependencies(simple_serial_transmitter rclcpp std_msgs)
-target_include_directories(simple_serial_transmitter PUBLIC
- "${SERIAL_INCLUDE_DIRS}")
-target_link_libraries(simple_serial_transmitter
- "${SERIAL_LDFLAGS}")
+add_executable(simple_motor_control src/simple_motor_control.cpp)
+ament_target_dependencies(simple_motor_control rclcpp)
+target_link_libraries(simple_motor_control ${PROJECT_NAME})
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -67,15 +61,12 @@ install(
 )
 
 install(PROGRAMS
-  ${PROJECT_NAME}/simple_serial_transmitter.py
-  ${PROJECT_NAME}/simple_serial_receiver.py
   ${PROJECT_NAME}/mpu6050_driver.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(TARGETS
-  simple_serial_receiver
-  simple_serial_transmitter
+  simple_motor_control
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
