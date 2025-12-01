@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME} SHARED
   src/pwm_manager.cpp
   src/digital_out.cpp
   src/encoder.cpp
+  src/pid.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC 
   include

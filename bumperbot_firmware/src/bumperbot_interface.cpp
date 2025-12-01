@@ -20,17 +20,29 @@ CallbackReturn BumperbotInterface::on_init(const hardware_interface::HardwareInf
     return result;
   }
 
-  std::string gpio_chip = info_.hardware_parameters.at("gpio_chip");
+  std::string gpio_chip;
+  try {
+    gpio_chip = info_.hardware_parameters.at("gpio_chip");
+    RCLCPP_INFO(
+      rclcpp::get_logger("BumperbotInterface"),
+      "BumperbotInterface: Using GPIO chip: %s", gpio_chip.c_str());
+  } catch (const std::out_of_range & e) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BumperbotInterface"),
+      "BumperbotInterface: Missing 'gpio_chip' parameter in hardware_parameters");
+    return CallbackReturn::ERROR;
+  }
+
   left_motor_ = std::make_unique<bumperbot_firmware::Motor>(
-    gpio_chip, LEFT_MOTOR_IN1, LEFT_MOTOR_IN2, LEFT_MOTOR_ENA, LEFT_MOTOR_ENC_A, LEFT_MOTOR_ENC_B);
+    gpio_chip, LEFT_MOTOR_IN1, LEFT_MOTOR_IN2, LEFT_MOTOR_ENA, LEFT_MOTOR_ENC_A, LEFT_MOTOR_ENC_B,
+    LEFT_MOTOR_KP, LEFT_MOTOR_KI, LEFT_MOTOR_KD);
   right_motor_ = std::make_unique<bumperbot_firmware::Motor>(
     gpio_chip, RIGHT_MOTOR_IN1, RIGHT_MOTOR_IN2, RIGHT_MOTOR_ENA, RIGHT_MOTOR_ENC_A,
-    RIGHT_MOTOR_ENC_B);
+    RIGHT_MOTOR_ENC_B, RIGHT_MOTOR_KP, RIGHT_MOTOR_KI, RIGHT_MOTOR_KD);
 
   velocity_commands_.reserve(info_.joints.size());
   position_states_.reserve(info_.joints.size());
   velocity_states_.reserve(info_.joints.size());
-  last_run_ = rclcpp::Clock().now();
 
   return CallbackReturn::SUCCESS;
 }
@@ -92,18 +104,25 @@ CallbackReturn BumperbotInterface::on_deactivate(const rclcpp_lifecycle::State &
 hardware_interface::return_type BumperbotInterface::read(
   const rclcpp::Time &, const rclcpp::Duration &)
 {
-  velocity_states_.at(0) = left_motor_->getSpeed();
-  velocity_states_.at(1) = right_motor_->getSpeed();
-  position_states_.at(0) = left_motor_->getPosition();
-  position_states_.at(1) = right_motor_->getPosition();
+  try {
+    velocity_states_.at(0) = left_motor_->getVelocity();
+    velocity_states_.at(1) = right_motor_->getVelocity();
+    position_states_.at(0) = left_motor_->getPosition();
+    position_states_.at(1) = right_motor_->getPosition();
+  } catch (...) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("BumperbotInterface"), "BumperbotInterface: Error reading from motors");
+    return hardware_interface::return_type::ERROR;
+  }
+
   return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type BumperbotInterface::write(
   const rclcpp::Time &, const rclcpp::Duration &)
 {
-  left_motor_->setSpeed(velocity_commands_.at(0));
-  right_motor_->setSpeed(velocity_commands_.at(1));
+  left_motor_->setVelocity(velocity_commands_.at(0));
+  right_motor_->setVelocity(velocity_commands_.at(1));
   return hardware_interface::return_type::OK;
 }
 }  // namespace bumperbot_firmware

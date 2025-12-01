@@ -4,6 +4,7 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include <chrono>
 
 #include <gpiod.hpp>
 
@@ -50,10 +51,11 @@ public:
     void reset();
 
 private:
-    static const double PPR = 10.0; // Pulses per revolution
-    static const double GEAR_RATIO = 35.0;
-    static const double PERIOD = 60.0;  // seconds
-    static const double RPM_TO_RADS = 0.10472; // Conversion factor from RPM to radians/second     
+    inline static const double DECODING_FACTOR = 4.0; // 4 counts per pulse for quadrature decoding
+    inline static const double PPR = 10.0; // Pulses per revolution
+    inline static const double GEAR_RATIO = 35.0;
+    inline static const double PERIOD = 60.0;  // seconds
+    inline static const double RPM_TO_RADS = 0.10472; // Conversion factor from RPM to radians/second     
 
     /**
      * @brief The main function for the monitoring thread.
@@ -74,6 +76,7 @@ private:
     std::atomic<double> m_velocity;
     std::atomic<int> m_last_state;
     std::atomic<bool> m_running;
+    std::chrono::time_point<std::chrono::system_clock> m_last_run;
 
     std::thread m_monitor_thread;
 };

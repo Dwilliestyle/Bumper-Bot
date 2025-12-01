@@ -59,7 +59,11 @@ long Encoder::getPosition() { return m_position.load(); }
 
 double Encoder::getVelocity() { return m_velocity.load(); }
 
-void Encoder::reset() { m_position.store(0); }
+void Encoder::reset()
+{
+  m_position.store(0);
+  m_velocity.store(0.0);
+}
 
 void Encoder::monitorLoop()
 {
@@ -87,9 +91,17 @@ void Encoder::monitorLoop()
 
       if (current_state != last) {
         int index = (last << 2) | current_state;
-        m_position += state_table[index];
-        m_velocity = state_table[index] * (PERIOD / (PPR * GEAR_RATIO)) * RPM_TO_RADS;
+        m_position.store(m_position.load() + state_table[index]);
+        // Update velocity
+        auto now = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration<double>(now - m_last_run).count();
+        if (elapsed > 0) {
+          m_velocity.store((state_table[index] * PERIOD * RPM_TO_RADS) / (DECODING_FACTOR * PPR * GEAR_RATIO * elapsed));
+        } else {
+          m_velocity.store(0.0);
+        }
         m_last_state.store(current_state);
+        m_last_run = std::chrono::system_clock::now();
       }
     }
   }

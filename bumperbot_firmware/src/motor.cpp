@@ -1,75 +1,76 @@
 #include "bumperbot_firmware/motor.hpp"
 
 #include <stdexcept>
+#include <iostream>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace bumperbot_firmware
 {
 Motor::Motor(
-  const std::string & chip, int pin_in1, int pin_in2, int pin_ena, int pin_enc_a, int pin_enc_b)
-: m_current_speed(0.0)
+  const std::string & chip, int pin_in1, int pin_in2, int pin_ena, int pin_enc_a, int pin_enc_b,
+  double kp, double ki, double kd)
 {
-  try {
-    m_in1 = std::make_unique<DigitalOut>(chip, pin_in1);
-    m_in2 = std::make_unique<DigitalOut>(chip, pin_in2);
-    m_ena = std::make_unique<PWMManager>(chip, pin_ena);
-    m_encoder = std::make_unique<Encoder>(chip, pin_enc_a, pin_enc_b);
+  in1_ = std::make_unique<DigitalOut>(chip, pin_in1);
+  in2_ = std::make_unique<DigitalOut>(chip, pin_in2);
+  ena_ = std::make_unique<PWMManager>(chip, pin_ena);
+  encoder_ = std::make_unique<Encoder>(chip, pin_enc_a, pin_enc_b);
+  pid_ = std::make_unique<PID>(kp, ki, kd);
+  pid_->setLimits(0.0, 1.0);
 
-    m_ena->setFrequency(1000);
-    m_ena->setDutyCycle(0.0);
-    m_ena->enable(true);
-  } catch (const std::exception & e) {
-    throw std::runtime_error("Failed to initialize motor: " + std::string(e.what()));
-  }
+  ena_->setFrequency(1000);
+  ena_->setDutyCycle(0.0);
+  ena_->enable(true);
 }
 
 Motor::~Motor()
 {
-  try {
-    stop();
-  } catch (...) {
-  }
+  stop();
 }
 
-void Motor::setVelocity(double percent)
+void Motor::setVelocity(double velocity)
 {
-  if (percent < 0.0) percent = 0.0;
-  if (percent > 1.0) percent = 1.0;
-  m_current_speed = percent;
-  m_ena->setDutyCycle(m_current_speed);
+  if(velocity > 0) {
+    forward();
+  } else if (velocity < 0) {
+    reverse();
+  } else {
+    stop();
+    return;
+  }
+  double control_signal = pid_->compute(std::abs(encoder_->getVelocity()), std::abs(velocity));
+  ena_->setDutyCycle(control_signal);
 }
 
 double Motor::getVelocity() const
 {
-  return static_cast<double>(m_encoder->getVelocity());
+  return encoder_->getVelocity();
 }
 
 double Motor::getPosition() const
 {
-  return static_cast<double>(m_encoder->getPosition());
+  return encoder_->getPosition();
 }
 
 void Motor::forward()
 {
-  m_in1->set(true);
-  m_in2->set(false);
-  m_ena->enable(true);
-  m_ena->setDutyCycle(m_current_speed);
+  in1_->set(true);
+  in2_->set(false);
+  ena_->enable(true);
 }
 
 void Motor::reverse()
 {
-  m_in1->set(false);
-  m_in2->set(true);
-  m_ena->enable(true);
-  m_ena->setDutyCycle(m_current_speed);
+  in1_->set(false);
+  in2_->set(true);
+  ena_->enable(true);
 }
 
 void Motor::stop()
 {
-  // Coast stop
-  m_ena->enable(false);
-  m_ena->setDutyCycle(0.0);
-  m_in1->set(false);
-  m_in2->set(false);
+  ena_->enable(false);
+  ena_->setDutyCycle(0.0);
+  in1_->set(false);
+  in2_->set(false);
 }
 }  // namespace bumperbot_firmware

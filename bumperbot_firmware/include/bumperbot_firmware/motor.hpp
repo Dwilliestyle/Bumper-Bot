@@ -4,8 +4,9 @@
 #include <memory>
 #include <string>
 
-#include "bumperbot_firmware/encoder.hpp"
 #include "bumperbot_firmware/digital_out.hpp"
+#include "bumperbot_firmware/encoder.hpp"
+#include "bumperbot_firmware/pid.hpp"
 #include "bumperbot_firmware/pwm_manager.hpp"
 
 namespace bumperbot_firmware
@@ -30,7 +31,8 @@ public:
    * @param pwm_freq The desired PWM frequency in Hz (default 10000).
    */
   Motor(
-    const std::string & chip, int pin_in1, int pin_in2, int pin_ena, int pin_enc_a, int pin_enc_b);
+    const std::string & chip, int pin_in1, int pin_in2, int pin_ena, int pin_enc_a, int pin_enc_b,
+    double kp, double ki, double kd);
 
   /**
    * @brief Destructor. Stops the motor.
@@ -76,11 +78,11 @@ public:
   void brake();
 
 private:
-  std::unique_ptr<DigitalOut> m_in1;
-  std::unique_ptr<DigitalOut> m_in2;
-  std::unique_ptr<PWMManager> m_ena;
-  std::unique_ptr<Encoder> m_encoder;
-  double m_current_speed;
+  std::unique_ptr<DigitalOut> in1_;
+  std::unique_ptr<DigitalOut> in2_;
+  std::unique_ptr<PWMManager> ena_;
+  std::unique_ptr<Encoder> encoder_;
+  std::unique_ptr<PID> pid_;
 };
 }  // namespace bumperbot_firmware
 
