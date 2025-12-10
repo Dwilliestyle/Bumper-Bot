@@ -153,87 +153,58 @@
   </gazebo>
 
   <!-- RGB Camera -->
-  <xacro:if value="${camera_model == 'pi_camera'}">
-    <gazebo reference="rgb_camera">
-      <sensor name="camera" type="camera">
-        <always_on>true</always_on>
-        <update_rate>30.0</update_rate>
-        <visualize>true</visualize>
-        <topic>/image_raw</topic>
-        <gz_frame_id>/rgb_camera</gz_frame_id>
-        <camera name="camera">
-          <horizontal_fov>1.21126</horizontal_fov>
-          <image>
-            <width>2304</width>
-            <height>1296</height>
-            <format>R8G8B8</format>
-          </image>
-          <distortion>
-            <k1>0.0</k1>
-            <k2>0.0</k2>
-            <k3>0.0</k3>
-            <p1>0.0</p1>
-            <p2>0.0</p2>
-            <center>0.5 0.5</center>
-          </distortion>
-        </camera>
-      </sensor>   
-    </gazebo>
-  </xacro:if>
+  <gazebo reference="left_camera_link">
+    <sensor name="left_camera" type="camera">
+      <always_on>true</always_on>
+      <update_rate>15.0</update_rate>
+      <visualize>true</visualize>
+      <topic>/left_camera/image_raw</topic>
+      <gz_frame_id>/left_camera_link</gz_frame_id>
+      <camera name="left_camera">
+        <horizontal_fov>1.27409</horizontal_fov>
+        <vertical_fov>0.872665</vertical_fov>
+        <image>
+          <width>1280</width>
+          <height>720</height>
+          <format>R8G8B8</format>
+        </image>
+        <distortion>
+          <k1>0.0</k1>
+          <k2>0.0</k2>
+          <k3>0.0</k3>
+          <p1>0.0</p1>
+          <p2>0.0</p2>
+          <center>0.5 0.5</center>
+        </distortion>
+      </camera>
+    </sensor>
+  </gazebo>
 
-  <!-- RGBD Camera -->
-  <xacro:if value="${camera_model == 'realsense_d435'}">
-    <gazebo reference="rgbd_camera_link">
-      <sensor name="d435_color" type="camera">
-				<always_on>1</always_on>
-				<update_rate>10</update_rate>
-				<visualize>1</visualize>
-				<topic>/rgbd_camera/image_raw</topic>
-        <gz_frame_id>rgbd_camera_color_optical_frame</gz_frame_id>
-				<camera name="d435">
-					<vertical_fov>1.518</vertical_fov>
-          <horizontal_fov>1.012</horizontal_fov>
-					<image>
-						<width>640</width>
-						<height>480</height>
-						<format>RGB_INT8</format>
-					</image>
-					<clip>
-						<near>0.1</near>
-						<far>100</far>
-					</clip>
-					<noise>
-						<type>gaussian</type>
-						<mean>0</mean>
-						<stddev>0.007</stddev>
-					</noise>
-				</camera>
-			</sensor>
-      <sensor name="d435_depth" type="depth_camera">
-				<always_on>1</always_on>
-				<update_rate>10</update_rate>
-				<visualize>0</visualize>
-				<topic>/rgbd_camera/depth</topic>
-        <gz_frame_id>rgbd_camera_depth_optical_frame</gz_frame_id>
-				<camera name="d435">
-					<vertical_fov>1.518</vertical_fov>
-          <horizontal_fov>1.012</horizontal_fov>
-					<image>
-						<width>640</width>
-						<height>480</height>
-					</image>
-					<clip>
-						<near>0.1</near>
-						<far>100</far>
-					</clip>
-					<noise>
-						<type>gaussian</type>
-						<mean>0</mean>
-						<stddev>0.001</stddev>
-					</noise>
-				</camera>
-			</sensor>
-    </gazebo>
-  </xacro:if>
+  <gazebo reference="right_camera_link">
+    <sensor name="right_camera" type="camera">
+      <always_on>true</always_on>
+      <update_rate>15.0</update_rate>
+      <visualize>true</visualize>
+      <topic>/right_camera/image_raw</topic>
+      <gz_frame_id>/right_camera_link</gz_frame_id>
+      <camera name="right_camera">
+        <horizontal_fov>1.27409</horizontal_fov>
+        <vertical_fov>0.872665</vertical_fov>
+        <image>
+          <width>1280</width>
+          <height>720</height>
+          <format>R8G8B8</format>
+        </image>
+        <distortion>
+          <k1>0.0</k1>
+          <k2>0.0</k2>
+          <k3>0.0</k3>
+          <p1>0.0</p1>
+          <p2>0.0</p2>
+          <center>0.5 0.5</center>
+        </distortion>
+      </camera>
+    </sensor>
+  </gazebo>
 
 </robot>

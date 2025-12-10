@@ -81,14 +81,13 @@ def generate_launch_description():
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/imu@sensor_msgs/msg/Imu[gz.msgs.IMU",
             "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
-            "/rgbd_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
-            "/rgbd_camera/depth@sensor_msgs/msg/Image[gz.msgs.Image",
-            "/rgbd_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
-            "/rgbd_camera/depth/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+            "/left_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/left_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/right_camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/right_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
         ],
         remappings=[
             ('/imu', '/imu/out'),
-            ('/rgbd_camera/depth', '/rgbd_camera/depth/image_raw'),
         ],
     )
 
