@@ -26,8 +26,6 @@ StereoVision::StereoVision(const std::string & name) : Node(name)
 
   disparity_image_pub_ =
     image_transport::create_publisher(this, "disparity", rmw_qos_profile_sensor_data);
-  point_cloud_pub_ =
-    create_publisher<sensor_msgs::msg::PointCloud2>("point_cloud", rclcpp::SensorDataQoS());
 }
 
 void StereoVision::imageCallback(
@@ -88,7 +86,12 @@ void StereoVision::imageCallback(
       ++iter_intensity;
     }
   }
-  point_cloud_pub_->publish(pointcloud_msg);
+
+  if(!pct_){
+    pct_ = std::make_unique<point_cloud_transport::PointCloudTransport>(shared_from_this());
+    point_cloud_pub_ = pct_->advertise("point_cloud", rmw_qos_profile_sensor_data);
+  }
+  point_cloud_pub_.publish(pointcloud_msg);
 }
 }  // namespace bumperbot_vision
 

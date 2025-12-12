@@ -10,6 +10,8 @@ from sensor_msgs.msg import Image, CameraInfo, PointCloud2, PointField
 import sensor_msgs_py.point_cloud2 as pc2
 
 import message_filters
+import point_cloud_transport_py
+from point_cloud_transport_py.common import pointCloud2ToString
 
 class StereoVision(Node):
     def __init__(self, name):
@@ -39,8 +41,8 @@ class StereoVision(Node):
         self.disparity_image_pub = self.create_publisher(
             Image, "disparity", qos_profile_sensor_data)
         
-        self.point_cloud_pub = self.create_publisher(
-            PointCloud2, "point_cloud", qos_profile_sensor_data)
+        self.pct = point_cloud_transport_py.PointCloudTransport("point_cloud_transport", "")
+        self.point_cloud_pub = self.pct.advertise("point_cloud", 10)
 
         self.get_logger().info("Stereo Vision Node Initialized")
 
@@ -109,7 +111,7 @@ class StereoVision(Node):
             ]
 
             pc_msg = pc2.create_cloud(left_img_msg.header, fields, points)
-            self.point_cloud_pub.publish(pc_msg)
+            self.point_cloud_pub.publish(pointCloud2ToString(pc_msg))
 
         except Exception as e:
             self.get_logger().error(f"Error in stereo callback: {e}")

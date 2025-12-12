@@ -6,6 +6,7 @@
 
 #include "image_transport/image_transport.hpp"
 #include "image_transport/subscriber_filter.hpp"
+#include "point_cloud_transport/point_cloud_transport.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,8 +39,8 @@ private:
   std::shared_ptr<ApproximateSync> approximate_sync_;
 
   image_transport::Publisher disparity_image_pub_;
-
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_pub_;
+  std::unique_ptr<point_cloud_transport::PointCloudTransport> pct_;
+  point_cloud_transport::Publisher point_cloud_pub_;
 
   void imageCallback(
     const sensor_msgs::msg::Image::ConstSharedPtr & l_image_msg,
