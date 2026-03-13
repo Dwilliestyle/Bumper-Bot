@@ -39,7 +39,7 @@ private:
   std::vector<double> velocity_commands_;
   std::vector<double> position_states_;
   std::vector<double> velocity_states_;
-  rclcpp::Time last_run_;
+  double last_run_;
 };
 }  // namespace bumperbot_firmware
 

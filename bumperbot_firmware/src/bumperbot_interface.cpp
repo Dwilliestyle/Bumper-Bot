@@ -48,7 +48,7 @@ CallbackReturn BumperbotInterface::on_init(const hardware_interface::HardwareInf
   velocity_commands_.reserve(info_.joints.size());
   position_states_.reserve(info_.joints.size());
   velocity_states_.reserve(info_.joints.size());
-  last_run_ = rclcpp::Clock().now();
+  last_run_ = 0.0;
 
   return CallbackReturn::SUCCESS;
 }
@@ -141,7 +141,7 @@ hardware_interface::return_type BumperbotInterface::read(const rclcpp::Time &,
   // Interpret the string
   if(arduino_.IsDataAvailable())
   {
-    auto dt = (rclcpp::Clock().now() - last_run_).seconds();
+    auto dt = rclcpp::Clock().now().seconds() - last_run_;
     std::string message;
     arduino_.ReadLine(message);
     std::stringstream ss(message);
@@ -162,7 +162,7 @@ hardware_interface::return_type BumperbotInterface::read(const rclcpp::Time &,
         position_states_.at(1) += velocity_states_.at(1) * dt;
       }
     }
-    last_run_ = rclcpp::Clock().now();
+    last_run_ = rclcpp::Clock().now().seconds();
   }
   return hardware_interface::return_type::OK;
 }
