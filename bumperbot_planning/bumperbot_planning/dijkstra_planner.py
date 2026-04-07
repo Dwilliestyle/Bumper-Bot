@@ -36,12 +36,8 @@ class DijkstraPlanner(Node):
         map_qos = QoSProfile(depth=10)
         map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
 
-        self.map_sub = self.create_subscription(
-            OccupancyGrid, "/costmap", self.map_callback, map_qos
-        )
-        self.pose_sub = self.create_subscription(
-            PoseStamped, "/goal_pose", self.goal_callback, 10
-        )
+        self.map_sub = self.create_subscription(OccupancyGrid, "/costmap", self.map_callback, map_qos)
+        self.pose_sub = self.create_subscription(PoseStamped, "/goal_pose", self.goal_callback, 10)
         self.path_pub = self.create_publisher(Path, "/dijkstra/path", 10)
         self.map_pub = self.create_publisher(OccupancyGrid, "/dijkstra/visited_map", 10)
 
