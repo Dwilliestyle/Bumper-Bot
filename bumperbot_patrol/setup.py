@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='don',
     maintainer_email='dwilliestyle@gmail.com',
-    description='TODO: Package description',
+    description='Patrol routine for the bumperbot using actions',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -25,9 +25,9 @@ setup(
     entry_points={
         'console_scripts': [
               'bumperbot_patrol_server = \
-                bumperbot_example.bumperbot_patrol.bumperbot_patrol_server:main',
+                bumperbot_patrol.bumperbot_patrol_server:main',
             'bumperbot_patrol_client = \
-                bumperbot_example.bumperbot_patrol.bumperbot_patrol_client:main',
+                bumperbot_patrol.bumperbot_patrol_client:main',
         ],
     },
 )
