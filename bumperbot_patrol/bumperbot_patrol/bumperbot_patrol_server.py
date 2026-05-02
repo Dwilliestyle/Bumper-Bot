@@ -45,7 +45,7 @@ class BumperbotPatrolServer(Node):
         self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', qos)
 
         self.odom_sub = self.create_subscription(
-            Odometry, 'odom', self.odom_callback, qos)
+            Odometry, '/bumperbot_controller/odom', self.odom_callback, qos)
 
     def init_twist(self):
         self.twist.linear.x = 0.0
