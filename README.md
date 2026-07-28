@@ -2,7 +2,7 @@
 [![Udemy][udemy-shield]][udemy-url]
 
 <p align="center">
-  <img src="media/bumperbot.jpg" width="650">
+  <img src="media/bumperbot.jpg" width="750">
 </p>
 
 Pictured: Bumperbot constructed by Dwilliestlye, based on instructions from Antonio Brandi's Udemy courses. 
