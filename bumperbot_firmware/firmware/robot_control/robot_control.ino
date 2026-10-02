@@ -5,14 +5,14 @@
 #define L298N_enB 11  // PWM
 #define L298N_in4 8  // Dir Motor B
 #define L298N_in3 7  // Dir Motor B
-#define L298N_in2 13  // Dir Motor A
+#define L298N_in2 13  // Dir Motor A  -- kept on pin 13; try software-only fix first before rewiring
 #define L298N_in1 12  // Dir Motor A
 
 // Wheel Encoders Connection PINs
 #define right_encoder_phaseA 2  // Interrupt 
-#define right_encoder_phaseB 5  
+#define right_encoder_phaseB 4  
 #define left_encoder_phaseA 3   // Interrupt
-#define left_encoder_phaseB 4
+#define left_encoder_phaseB 5
 
 // Encoders
 unsigned int right_encoder_counter = 0;
@@ -52,6 +52,21 @@ double Kd_l = 0.1;
 PID rightMotor(&right_wheel_meas_vel, &right_wheel_cmd, &right_wheel_cmd_vel, Kp_r, Ki_r, Kd_r, DIRECT);
 PID leftMotor(&left_wheel_meas_vel, &left_wheel_cmd, &left_wheel_cmd_vel, Kp_l, Ki_l, Kd_l, DIRECT);
 
+// Deterministic direction setters - do NOT rely on digitalRead() to infer
+// current pin state. That pattern is fragile in general, and pin 13 in
+// particular (onboard LED + SPI SCK) is prone to unreliable digitalRead().
+void setRightDirection(bool forward)
+{
+  digitalWrite(L298N_in1, forward ? HIGH : LOW);
+  digitalWrite(L298N_in2, forward ? LOW : HIGH);
+}
+
+void setLeftDirection(bool forward)
+{
+  digitalWrite(L298N_in3, forward ? HIGH : LOW);
+  digitalWrite(L298N_in4, forward ? LOW : HIGH);
+}
+
 void setup() {
   // Init L298N H-Bridge Connection PINs
   pinMode(L298N_enA, OUTPUT);
@@ -61,19 +76,25 @@ void setup() {
   pinMode(L298N_in3, OUTPUT);
   pinMode(L298N_in4, OUTPUT);
 
-  // Set Motor Rotation Direction
-  digitalWrite(L298N_in1, HIGH);
-  digitalWrite(L298N_in2, LOW);
-  digitalWrite(L298N_in3, HIGH);
-  digitalWrite(L298N_in4, LOW);
+  // Set Motor Rotation Direction (forward)
+  setRightDirection(true);
+  setLeftDirection(true);
 
   rightMotor.SetMode(AUTOMATIC);
   leftMotor.SetMode(AUTOMATIC);
   Serial.begin(115200);
 
   // Init encoders
-  pinMode(right_encoder_phaseB, INPUT);
-  pinMode(left_encoder_phaseB, INPUT);
+  // phaseA pins previously had no pinMode() call at all (relied on default
+  // floating INPUT); phaseB was plain INPUT, not pulled up. A floating or
+  // noisy phaseA line can cause missed/spurious interrupt triggers, which
+  // would produce erratic encoder counts without any pin being physically
+  // damaged. Try pull-ups on all four encoder lines before assuming a
+  // hardware fault.
+  pinMode(right_encoder_phaseA, INPUT_PULLUP);
+  pinMode(right_encoder_phaseB, INPUT_PULLUP);
+  pinMode(left_encoder_phaseA, INPUT_PULLUP);
+  pinMode(left_encoder_phaseB, INPUT_PULLUP);
   // Set Callback for Wheel Encoders Pulse
   attachInterrupt(digitalPinToInterrupt(right_encoder_phaseA), rightEncoderCallback, RISING);
   attachInterrupt(digitalPinToInterrupt(left_encoder_phaseA), leftEncoderCallback, RISING);
@@ -92,7 +113,7 @@ void loop() {
       value_idx = 0;
       is_cmd_complete = false;
     }
-    // Left Wheel Mo tor
+    // Left Wheel Motor
     else if(chr == 'l')
     {
       is_right_wheel_cmd = false;
@@ -104,16 +125,12 @@ void loop() {
     {
       if(is_right_wheel_cmd && !is_right_wheel_forward)
       {
-        // change the direction of the rotation
-        digitalWrite(L298N_in1, HIGH - digitalRead(L298N_in1));
-        digitalWrite(L298N_in2, HIGH - digitalRead(L298N_in2));
+        setRightDirection(true);
         is_right_wheel_forward = true;
       }
       else if(is_left_wheel_cmd && !is_left_wheel_forward)
       {
-        // change the direction of the rotation
-        digitalWrite(L298N_in3, HIGH - digitalRead(L298N_in3));
-        digitalWrite(L298N_in4, HIGH - digitalRead(L298N_in4));
+        setLeftDirection(true);
         is_left_wheel_forward = true;
       }
     }
@@ -122,16 +139,12 @@ void loop() {
     {
       if(is_right_wheel_cmd && is_right_wheel_forward)
       {
-        // change the direction of the rotation
-        digitalWrite(L298N_in1, HIGH - digitalRead(L298N_in1));
-        digitalWrite(L298N_in2, HIGH - digitalRead(L298N_in2));
+        setRightDirection(false);
         is_right_wheel_forward = false;
       }
       else if(is_left_wheel_cmd && is_left_wheel_forward)
       {
-        // change the direction of the rotation
-        digitalWrite(L298N_in3, HIGH - digitalRead(L298N_in3));
-        digitalWrite(L298N_in4, HIGH - digitalRead(L298N_in4));
+        setLeftDirection(false);
         is_left_wheel_forward = false;
       }
     }
