@@ -5,18 +5,20 @@
 #define L298N_enB 11  // PWM
 #define L298N_in4 8  // Dir Motor B
 #define L298N_in3 7  // Dir Motor B
-#define L298N_in2 13  // Dir Motor A  -- kept on pin 13; try software-only fix first before rewiring
+#define L298N_in2 13  // Dir Motor A
 #define L298N_in1 12  // Dir Motor A
 
 // Wheel Encoders Connection PINs
-#define right_encoder_phaseA 2  // Interrupt 
-#define right_encoder_phaseB 4  
+#define right_encoder_phaseA 2  // Interrupt
+#define right_encoder_phaseB 4
 #define left_encoder_phaseA 3   // Interrupt
 #define left_encoder_phaseB 5
 
 // Encoders
-unsigned int right_encoder_counter = 0;
-unsigned int left_encoder_counter = 0;
+volatile unsigned int right_encoder_counter = 0;
+volatile unsigned int left_encoder_counter = 0;
+volatile int right_encoder_dir = 0;  // direction votes, one per pulse
+volatile int left_encoder_dir = 0;
 String right_wheel_sign = "p";  // 'p' = positive, 'n' = negative
 String left_wheel_sign = "p";  // 'p' = positive, 'n' = negative
 unsigned long last_millis = 0;
@@ -52,21 +54,6 @@ double Kd_l = 0.1;
 PID rightMotor(&right_wheel_meas_vel, &right_wheel_cmd, &right_wheel_cmd_vel, Kp_r, Ki_r, Kd_r, DIRECT);
 PID leftMotor(&left_wheel_meas_vel, &left_wheel_cmd, &left_wheel_cmd_vel, Kp_l, Ki_l, Kd_l, DIRECT);
 
-// Deterministic direction setters - do NOT rely on digitalRead() to infer
-// current pin state. That pattern is fragile in general, and pin 13 in
-// particular (onboard LED + SPI SCK) is prone to unreliable digitalRead().
-void setRightDirection(bool forward)
-{
-  digitalWrite(L298N_in1, forward ? HIGH : LOW);
-  digitalWrite(L298N_in2, forward ? LOW : HIGH);
-}
-
-void setLeftDirection(bool forward)
-{
-  digitalWrite(L298N_in3, forward ? HIGH : LOW);
-  digitalWrite(L298N_in4, forward ? LOW : HIGH);
-}
-
 void setup() {
   // Init L298N H-Bridge Connection PINs
   pinMode(L298N_enA, OUTPUT);
@@ -76,25 +63,19 @@ void setup() {
   pinMode(L298N_in3, OUTPUT);
   pinMode(L298N_in4, OUTPUT);
 
-  // Set Motor Rotation Direction (forward)
-  setRightDirection(true);
-  setLeftDirection(true);
+  // Set Motor Rotation Direction
+  digitalWrite(L298N_in1, HIGH);
+  digitalWrite(L298N_in2, LOW);
+  digitalWrite(L298N_in3, HIGH);
+  digitalWrite(L298N_in4, LOW);
 
   rightMotor.SetMode(AUTOMATIC);
   leftMotor.SetMode(AUTOMATIC);
   Serial.begin(115200);
 
   // Init encoders
-  // phaseA pins previously had no pinMode() call at all (relied on default
-  // floating INPUT); phaseB was plain INPUT, not pulled up. A floating or
-  // noisy phaseA line can cause missed/spurious interrupt triggers, which
-  // would produce erratic encoder counts without any pin being physically
-  // damaged. Try pull-ups on all four encoder lines before assuming a
-  // hardware fault.
-  pinMode(right_encoder_phaseA, INPUT_PULLUP);
-  pinMode(right_encoder_phaseB, INPUT_PULLUP);
-  pinMode(left_encoder_phaseA, INPUT_PULLUP);
-  pinMode(left_encoder_phaseB, INPUT_PULLUP);
+  pinMode(right_encoder_phaseB, INPUT);
+  pinMode(left_encoder_phaseB, INPUT);
   // Set Callback for Wheel Encoders Pulse
   attachInterrupt(digitalPinToInterrupt(right_encoder_phaseA), rightEncoderCallback, RISING);
   attachInterrupt(digitalPinToInterrupt(left_encoder_phaseA), leftEncoderCallback, RISING);
@@ -125,12 +106,16 @@ void loop() {
     {
       if(is_right_wheel_cmd && !is_right_wheel_forward)
       {
-        setRightDirection(true);
+        // change the direction of the rotation
+        digitalWrite(L298N_in1, HIGH - digitalRead(L298N_in1));
+        digitalWrite(L298N_in2, HIGH - digitalRead(L298N_in2));
         is_right_wheel_forward = true;
       }
       else if(is_left_wheel_cmd && !is_left_wheel_forward)
       {
-        setLeftDirection(true);
+        // change the direction of the rotation
+        digitalWrite(L298N_in3, HIGH - digitalRead(L298N_in3));
+        digitalWrite(L298N_in4, HIGH - digitalRead(L298N_in4));
         is_left_wheel_forward = true;
       }
     }
@@ -139,12 +124,16 @@ void loop() {
     {
       if(is_right_wheel_cmd && is_right_wheel_forward)
       {
-        setRightDirection(false);
+        // change the direction of the rotation
+        digitalWrite(L298N_in1, HIGH - digitalRead(L298N_in1));
+        digitalWrite(L298N_in2, HIGH - digitalRead(L298N_in2));
         is_right_wheel_forward = false;
       }
       else if(is_left_wheel_cmd && is_left_wheel_forward)
       {
-        setLeftDirection(false);
+        // change the direction of the rotation
+        digitalWrite(L298N_in3, HIGH - digitalRead(L298N_in3));
+        digitalWrite(L298N_in4, HIGH - digitalRead(L298N_in4));
         is_left_wheel_forward = false;
       }
     }
@@ -186,7 +175,7 @@ void loop() {
   {
     right_wheel_meas_vel = (10 * right_encoder_counter * (60.0/385.0)) * 0.10472;
     left_wheel_meas_vel = (10 * left_encoder_counter * (60.0/385.0)) * 0.10472;
-    
+
     rightMotor.Compute();
     leftMotor.Compute();
 
@@ -200,11 +189,20 @@ void loop() {
       left_wheel_cmd = 0.0;
     }
 
+    // Direction = majority vote of the pulses in this window.
+    // If there were no pulses, keep the previous sign.
+    if(right_encoder_dir > 0) right_wheel_sign = "p";
+    else if(right_encoder_dir < 0) right_wheel_sign = "n";
+    if(left_encoder_dir > 0) left_wheel_sign = "p";
+    else if(left_encoder_dir < 0) left_wheel_sign = "n";
+
     String encoder_read = "r" + right_wheel_sign + String(right_wheel_meas_vel) + ",l" + left_wheel_sign + String(left_wheel_meas_vel) + ",";
     Serial.println(encoder_read);
     last_millis = current_millis;
     right_encoder_counter = 0;
     left_encoder_counter = 0;
+    right_encoder_dir = 0;
+    left_encoder_dir = 0;
 
     analogWrite(L298N_enA, right_wheel_cmd);
     analogWrite(L298N_enB, left_wheel_cmd);
@@ -216,11 +214,11 @@ void rightEncoderCallback()
 {
   if(digitalRead(right_encoder_phaseB) == HIGH)
   {
-    right_wheel_sign = "p";
+    right_encoder_dir++;
   }
   else
   {
-    right_wheel_sign = "n";
+    right_encoder_dir--;
   }
   right_encoder_counter++;
 }
@@ -230,11 +228,11 @@ void leftEncoderCallback()
 {
   if(digitalRead(left_encoder_phaseB) == HIGH)
   {
-    left_wheel_sign = "n";
+    left_encoder_dir--;
   }
   else
   {
-    left_wheel_sign = "p";
+    left_encoder_dir++;
   }
   left_encoder_counter++;
 }
