@@ -125,7 +125,4 @@ Antonio Brandi - [LinkedIn]([linkedin-url]) - antonio.brandi@outlook.it
 Other Projects: [https://github.com/AntoBrandi](https://github.com/AntoBrandi)
 
 
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
-[linkedin-url]: https://www.linkedin.com/in/antonio-brandi-512166bb/
-[udemy-shield]: https://img.shields.io/badge/-Udemy-black.svg?style=flat-square&logo=udemy&colorB=555
-[udemy-url]: https://www.udemy.com/course/self-driving-and-ros-2-learn-by-doing-odometry-control/?referralCode=50BCC4E84DB2DB09BFB3
+[![D-Willie Style's Bumperbot](https://img.youtube.com/vi/kqRkXNUFW0c/0.jpg)](https://youtu.be/kqRkXNUFW0c)
