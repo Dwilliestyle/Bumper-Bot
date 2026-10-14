@@ -1,6 +1,3 @@
-[![LinkedIn][linkedin-shield]][linkedin-url]
-[![Udemy][udemy-shield]][udemy-url]
-
 <p align="center">
   <img src="media/20261013_081116.jpg" width="750">
 </p>
