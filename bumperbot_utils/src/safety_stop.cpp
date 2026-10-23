@@ -27,17 +27,15 @@ public:
   {
     declare_parameter<double>("warning_distance", 0.6);
     declare_parameter<double>("danger_distance", 0.2);
-    declare_parameter<std::string>("scan_topic", "scan");
-    declare_parameter<std::string>("safety_stop_topic", "safety_stop");
+    
     warning_distance_ = get_parameter("warning_distance").as_double();
     danger_distance_ = get_parameter("danger_distance").as_double();
-    std::string scan_topic = get_parameter("scan_topic").as_string();
-    std::string safety_stop_topic = get_parameter("safety_stop_topic").as_string();
-
+    
     laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-        scan_topic, 10, std::bind(&SafetyStop::laserCallback, this, _1));
-    safety_stop_pub_ = create_publisher<std_msgs::msg::Bool>(safety_stop_topic, 10);
+        "scan", 10, std::bind(&SafetyStop::laserCallback, this, _1));
+    safety_stop_pub_ = create_publisher<std_msgs::msg::Bool>("safety_stop", 10);
     zones_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("zones", 10);
+    
     decrease_speed_client_ = rclcpp_action::create_client<twist_mux_msgs::action::JoyTurbo>(this, "joy_turbo_decrease");
     increase_speed_client_ = rclcpp_action::create_client<twist_mux_msgs::action::JoyTurbo>(this, "joy_turbo_increase");
     while(!decrease_speed_client_->wait_for_action_server(1s) && rclcpp::ok())
