@@ -23,21 +23,19 @@ class SafetyStop(Node):
         super().__init__('safety_stop_node')
         self.declare_parameter('warning_distance', 0.6)
         self.declare_parameter('danger_distance', 0.2)
-        self.declare_parameter('scan_topic', 'scan')
-        self.declare_parameter('safety_stop_topic', 'safety_stop')
+        
         self.warning_distance = self.get_parameter('warning_distance').get_parameter_value().double_value
         self.danger_distance = self.get_parameter('danger_distance').get_parameter_value().double_value
-        self.scan_topic = self.get_parameter('scan_topic').get_parameter_value().string_value
-        self.safety_stop_topic = self.get_parameter('safety_stop_topic').get_parameter_value().string_value
+        
         self.is_first_msg = True
         self.state = State.FREE
         self.prev_state = State.FREE
 
         self.laser_sub = self.create_subscription(
-            LaserScan, self.scan_topic, self.laser_callback, 10
+            LaserScan, "scan", self.laser_callback, 10
         )
         self.safety_stop_pub = self.create_publisher(
-            Bool, self.safety_stop_topic, 10
+            Bool, "safety_stop", 10
         )
         self.zones_pub = self.create_publisher(
             MarkerArray, 'zones', 10
