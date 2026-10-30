@@ -87,7 +87,7 @@ void loop() {
   {
     char chr = Serial.read();
     // Right Wheel Motor
-    if(chr == 'r')
+    if(chr == 'l')
     {
       is_right_wheel_cmd = true;
       is_left_wheel_cmd = false;
@@ -95,7 +95,7 @@ void loop() {
       is_cmd_complete = false;
     }
     // Left Wheel Motor
-    else if(chr == 'l')
+    else if(chr == 'r')
     {
       is_right_wheel_cmd = false;
       is_left_wheel_cmd = true;
@@ -196,7 +196,8 @@ void loop() {
     if(left_encoder_dir > 0) left_wheel_sign = "p";
     else if(left_encoder_dir < 0) left_wheel_sign = "n";
 
-    String encoder_read = "r" + right_wheel_sign + String(right_wheel_meas_vel) + ",l" + left_wheel_sign + String(left_wheel_meas_vel) + ",";
+    // SWAP: report physical wheels under the names ROS expects
+    String encoder_read = "r" + left_wheel_sign + String(left_wheel_meas_vel) + ",l" + right_wheel_sign + String(right_wheel_meas_vel) + ",";
     Serial.println(encoder_read);
     last_millis = current_millis;
     right_encoder_counter = 0;
