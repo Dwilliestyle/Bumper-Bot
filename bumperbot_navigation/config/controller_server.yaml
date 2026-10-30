@@ -61,7 +61,7 @@ controller_server:
       use_fixed_curvature_lookahead: false
       curvature_lookahead_dist: 1.0
       use_rotate_to_heading: true
-      rotate_to_heading_min_angle: 0.785
+      rotate_to_heading_min_angle: 1.0
       max_angular_accel: 6.0
       max_robot_pose_search_dist: 10.0
       interpolate_curvature_after_goal: false
