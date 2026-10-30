@@ -54,6 +54,19 @@ double Kd_l = 0.1;
 PID rightMotor(&right_wheel_meas_vel, &right_wheel_cmd, &right_wheel_cmd_vel, Kp_r, Ki_r, Kd_r, DIRECT);
 PID leftMotor(&left_wheel_meas_vel, &left_wheel_cmd, &left_wheel_cmd_vel, Kp_l, Ki_l, Kd_l, DIRECT);
 
+// Deadband compensation
+// Lowest PWM at which each wheel reliably starts turning (measure with
+// motor_deadband_test.ino, then add ~5 for margin). Any nonzero PID output
+// is mapped into MIN_PWM..255 so small commands still move the wheel.
+const int MIN_PWM_RIGHT = 45;
+const int MIN_PWM_LEFT  = 45;
+
+int pidToPwm(double pid_out, int min_pwm)
+{
+  if(pid_out < 1.0) return 0;  // PID asked for (almost) nothing: coast
+  return min_pwm + (int)(pid_out * (255 - min_pwm) / 255.0);
+}
+
 void setup() {
   // Init L298N H-Bridge Connection PINs
   pinMode(L298N_enA, OUTPUT);
@@ -176,17 +189,28 @@ void loop() {
       right_wheel_meas_vel = (10 * right_encoder_counter * (60.0/621.0)) * 0.10472;
   left_wheel_meas_vel  = (10 * left_encoder_counter  * (60.0/621.0)) * 0.10472;
 
-    rightMotor.Compute();
-    leftMotor.Compute();
-
-    // Ignore commands smaller than inertia
+    // Zero command: switch the PID to MANUAL and stop the wheel.
+    // Switching back to AUTOMATIC re-initializes the PID from 0, so no
+    // leftover integral (windup) causes a jerk when the wheel starts again.
     if(right_wheel_cmd_vel == 0.0)
     {
+      rightMotor.SetMode(MANUAL);
       right_wheel_cmd = 0.0;
+    }
+    else
+    {
+      rightMotor.SetMode(AUTOMATIC);
+      rightMotor.Compute();
     }
     if(left_wheel_cmd_vel == 0.0)
     {
+      leftMotor.SetMode(MANUAL);
       left_wheel_cmd = 0.0;
+    }
+    else
+    {
+      leftMotor.SetMode(AUTOMATIC);
+      leftMotor.Compute();
     }
 
     // Direction = majority vote of the pulses in this window.
@@ -205,8 +229,8 @@ void loop() {
     right_encoder_dir = 0;
     left_encoder_dir = 0;
 
-    analogWrite(L298N_enA, right_wheel_cmd);
-    analogWrite(L298N_enB, left_wheel_cmd);
+    analogWrite(L298N_enA, pidToPwm(right_wheel_cmd, MIN_PWM_RIGHT));
+    analogWrite(L298N_enB, pidToPwm(left_wheel_cmd, MIN_PWM_LEFT));
   }
 }
 
