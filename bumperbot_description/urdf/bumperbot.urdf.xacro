@@ -42,7 +42,7 @@
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint"/>
     <child link="base_link" />
-    <origin xyz="0 0 0.0717" rpy="0 0 0"/>
+    <origin xyz="0 0 0.072" rpy="0 0 0"/>
   </joint>
 
   <link name="wheel_right_link">
@@ -61,7 +61,7 @@
       <material name="blue"/>
     </visual>
     <collision>
-      <origin xyz="0 -0.0204 0" rpy="1.57 0 0" />
+      <origin xyz="0 -0.015 0" rpy="1.57 0 0" />
       <geometry>
         <sphere radius="0.03218"/>
       </geometry>
@@ -92,7 +92,7 @@
       <material name="blue"/>
     </visual>
     <collision>
-      <origin xyz="0 0.0204 0" rpy="-1.57 0 0" />
+      <origin xyz="0 0.015 0" rpy="-1.57 0 0" />
       <geometry>
         <sphere radius="0.03218"/>
       </geometry>
