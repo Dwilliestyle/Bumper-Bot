@@ -23,6 +23,14 @@ def generate_launch_description():
         ),
     )
 
+    camera_viewer = IncludeLaunchDescription(
+        os.path.join(
+            get_package_share_directory("bumperbot_bringup"),
+            "launch",
+            "camera.launch.py"
+        ),
+    )
+
     laser_driver = Node(
             package="rplidar_ros",
             executable="rplidar_composition",
@@ -96,6 +104,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_slam_arg,
         hardware_interface,
+        camera_viewer,
         laser_driver,
         controller,
         joystick,
