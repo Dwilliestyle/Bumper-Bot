@@ -23,7 +23,7 @@ def generate_launch_description():
         ),
     )
 
-    camera_viewer = IncludeLaunchDescription(
+    camera_driver = IncludeLaunchDescription(
         os.path.join(
             get_package_share_directory("bumperbot_bringup"),
             "launch",
@@ -104,7 +104,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_slam_arg,
         hardware_interface,
-        camera_viewer,
+        camera_driver,
         laser_driver,
         controller,
         joystick,
