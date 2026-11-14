@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import random
-import time
 from math import sin, cos, atan2, sqrt, fabs, pi
 
 import rclpy
@@ -51,7 +50,7 @@ class OdometryMotionModel(Node):
             self.samples = PoseArray()
             self.samples.poses = [Pose() for _ in range(self.nr_samples)]
         else:
-            self.get_logger().fatal('Invalid Number of Samples requested: %d! Exit..', self.nr_samples)
+            self.get_logger().fatal(f'Invalid Number of Samples requested: {self.nr_samples}! Exit..')
             return
 
         self.odom_sub = self.create_subscription(
@@ -83,22 +82,20 @@ class OdometryMotionModel(Node):
         if sqrt(pow(odom_y_increment, 2) + pow(odom_x_increment, 2)) < 0.01:
             delta_rot1 = 0.0
         else:
-            delta_rot1 = angle_diff(atan2(odom_y_increment, odom_x_increment), yaw)
+            delta_rot1 = angle_diff(atan2(odom_y_increment, odom_x_increment), self.last_odom_theta)
 
         delta_trans = sqrt(pow(odom_x_increment, 2) + pow(odom_y_increment, 2))
         delta_rot2 = angle_diff(odom_theta_increment, delta_rot1)
 
         # Noise Model that affects the Motion Model
-        rot1_variance = self.alpha1 * delta_rot1 + self.alpha2 * delta_trans
-        trans_variance = self.alpha3 * delta_trans + self.alpha4 * (delta_rot1 + delta_rot2)
-        rot2_variance = self.alpha1 * delta_rot2 + self.alpha2 * delta_trans
-        
-        random.seed(int(time.time()))
+        rot1_std  = self.alpha1 * abs(delta_rot1) + self.alpha2 * delta_trans
+        trans_std = self.alpha3 * delta_trans + self.alpha4 * (abs(delta_rot1) + abs(delta_rot2))
+        rot2_std  = self.alpha1 * abs(delta_rot2) + self.alpha2 * delta_trans
 
         for sample in self.samples.poses:
-            rot1_noise = random.gauss(0.0, rot1_variance)
-            trans_noise = random.gauss(0.0, trans_variance)
-            rot2_noise = random.gauss(0.0, rot2_variance)
+            rot1_noise = random.gauss(0.0, rot1_std)
+            trans_noise = random.gauss(0.0, trans_std)
+            rot2_noise = random.gauss(0.0, rot2_std)
             delta_rot1_draw = angle_diff(delta_rot1, rot1_noise)
             delta_trans_draw = delta_trans - trans_noise
             delta_rot2_draw = angle_diff(delta_rot2, rot2_noise)
