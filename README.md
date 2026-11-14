@@ -123,5 +123,4 @@ Other Projects: [https://github.com/AntoBrandi](https://github.com/AntoBrandi)
 
 
 DwillieStyle's Bumperbot teleop run on YouTube
-
 [![D-Willie Style's Bumperbot](https://img.youtube.com/vi/kqRkXNUFW0c/0.jpg)](https://youtu.be/kqRkXNUFW0c)
