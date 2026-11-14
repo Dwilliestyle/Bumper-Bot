@@ -182,7 +182,7 @@ BagOfWords::BagOfWords(const std::string & name)
 
 void BagOfWords::imageCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & image_msg,
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & info_msg)
+  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & /*info_msg*/)
 {
   cv::Mat img;
   try {

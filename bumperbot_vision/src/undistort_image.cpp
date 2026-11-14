@@ -32,7 +32,6 @@ void UndistortImage::imageCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr & info_msg)
 {
   cv::Mat image = cv_bridge::toCvCopy(image_msg, image_msg->encoding)->image;
-  int rows = image.rows, cols = image.cols;
   cv::Mat image_undistort;
 
   model_.fromCameraInfo(info_msg);
