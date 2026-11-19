@@ -93,6 +93,7 @@ install(PROGRAMS
   ${PROJECT_NAME}/undistort_image.py
   ${PROJECT_NAME}/stereo_vision.py
   ${PROJECT_NAME}/feature_detector.py
+  ${PROJECT_NAME}/stereo_camera_node.py
   ${PROJECT_NAME}/optical_flow.py
   ${PROJECT_NAME}/bag_of_words.py
   DESTINATION lib/${PROJECT_NAME}
