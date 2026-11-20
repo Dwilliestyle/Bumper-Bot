@@ -9,31 +9,41 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(image_transport_plugins REQUIRED)
 find_package(point_cloud_transport REQUIRED)
+find_package(point_cloud_transport_plugins REQUIRED)
+find_package(pcl_ros REQUIRED)
+find_package(pcl_conversions REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(bumperbot_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(DBoW3 REQUIRED)
 
+find_package(PCL REQUIRED COMPONENTS common filters)
+
 set(dependencies
   rclcpp
   image_transport
+  image_transport_plugins
   point_cloud_transport
+  point_cloud_transport_plugins
   message_filters
   sensor_msgs
+  geometry_msgs
+  bumperbot_msgs
+  tf2_ros
+  std_srvs
   cv_bridge
   image_geometry
-  geometry_msgs
   OpenCV
-  std_srvs
-  tf2_ros
-  bumperbot_msgs
+  pcl_ros
+  pcl_conversions
 )
 
 ament_python_install_package(${PROJECT_NAME})
@@ -91,6 +101,7 @@ install(TARGETS
 
 install(PROGRAMS
   ${PROJECT_NAME}/undistort_image.py
+  ${PROJECT_NAME}/image_processing.py
   ${PROJECT_NAME}/stereo_vision.py
   ${PROJECT_NAME}/feature_detector.py
   ${PROJECT_NAME}/stereo_camera_node.py
