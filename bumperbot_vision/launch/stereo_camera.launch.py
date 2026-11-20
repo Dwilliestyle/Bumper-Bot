@@ -31,8 +31,9 @@ def generate_launch_description():
             "height": 480,
             "fps": LaunchConfiguration("fps"),
             "use_mjpg": True,
-            "left_frame_id": "left_camera_optical",
-            "right_frame_id": "right_camera_optical",
+            # Must match the optical frames in bumperbot.urdf.xacro
+            "left_frame_id": "left_camera_optical_link",
+            "right_frame_id": "right_camera_optical_link",
             "left_info_file": LaunchConfiguration("left_info_file"),
             "right_info_file": LaunchConfiguration("right_info_file"),
         }],
