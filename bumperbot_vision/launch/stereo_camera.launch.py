@@ -1,3 +1,6 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
@@ -6,13 +9,15 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
+    config_dir = os.path.join(get_package_share_directory("bumperbot_vision"), "config")
+
     video_device_arg = DeclareLaunchArgument("video_device", default_value="/dev/video0")
     fps_arg = DeclareLaunchArgument("fps", default_value="30")
     left_info_arg = DeclareLaunchArgument(
-        "left_info_file", default_value="",
+        "left_info_file", default_value=os.path.join(config_dir, "left.yaml"),
         description="Left lens calibration YAML ('' = uncalibrated)")
     right_info_arg = DeclareLaunchArgument(
-        "right_info_file", default_value="",
+        "right_info_file", default_value=os.path.join(config_dir, "right.yaml"),
         description="Right lens calibration YAML ('' = uncalibrated)")
 
     stereo_camera = Node(
