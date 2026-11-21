@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""
+Image processing labs, one node.
+
+Instead of commenting/uncommenting sections, each lab is its own method.
+Pick one with the 'lab' parameter, and change it live:
+
+    ros2 run bumperbot_vision image_processing --ros-args -p lab:=contours
+    ros2 param set /image_processing lab blur_gaussian
+
+Available labs: original, gray, hsv, hsv_channel, hue_colorized,
+                blur_gaussian, blur_median, drawing, mask, contours
+"""
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -9,170 +21,188 @@ from cv_bridge import CvBridge
 import cv2
 import numpy as np
 
+
 class ImageProcessing(Node):
     def __init__(self):
         super().__init__('image_processing')
 
-        # Declare parameters
+        # ---------------- Parameters ----------------
         self.declare_parameter('camera_name', 'camera')
-        self.camera_name_ = self.get_parameter('camera_name').get_parameter_value().string_value
-
+        self.declare_parameter('lab', 'mask')
+        self.declare_parameter('hsv_channel', 'v')      # for hsv_channel lab: h, s, or v
+        self.declare_parameter('kernel_size', 7)        # for blur labs (must be odd)
         self.declare_parameter('lower_hsv', [79, 50, 50])
         self.declare_parameter('upper_hsv', [99, 255, 255])
-        self.lower_hsv_ = self.get_parameter('lower_hsv').value
-        self.upper_hsv_ = self.get_parameter('upper_hsv').value
 
-        # Initialize helpers
+        self.camera_name_ = self.get_parameter('camera_name').value
+
+        # Map lab name -> method. Adding a new lab = write a method, add a line here.
+        self.labs = {
+            'original':      self.lab_original,
+            'gray':          self.lab_gray,
+            'hsv':           self.lab_hsv,
+            'hsv_channel':   self.lab_hsv_channel,
+            'hue_colorized': self.lab_hue_colorized,
+            'blur_gaussian': self.lab_blur_gaussian,
+            'blur_median':   self.lab_blur_median,
+            'drawing':       self.lab_drawing,
+            'mask':          self.lab_mask,
+            'contours':      self.lab_contours,
+        }
+
+        # ---------------- Helpers ----------------
         self.bridge = CvBridge()
         self.camera_info = None
 
-        image_sub = self.create_subscription(
-            Image, 
-            f'{self.camera_name_}/image_rect',
-            self.image_callback,
-            qos_profile_sensor_data,
-        )
-        
-        info_sub = self.create_subscription(
-            CameraInfo,
-            f'{self.camera_name_}/camera_info',
-            self.image_info_callback,
-            qos_profile_sensor_data,
-        )
+        # ---------------- Subscribers ----------------
+        self.image_sub = self.create_subscription(
+            Image, f'{self.camera_name_}/image_rect',
+            self.image_callback, qos_profile_sensor_data)
 
+        self.info_sub = self.create_subscription(
+            CameraInfo, f'{self.camera_name_}/camera_info',
+            self.image_info_callback, qos_profile_sensor_data)
+
+        # ---------------- Publisher ----------------
         self.image_transport = ImageTransport(
-            'imagetransport_pub', image_transport='compressed'
-        )
+            'imagetransport_pub', image_transport='compressed')
         self.img_pub = self.image_transport.advertise(
-            f'{self.camera_name_}/processed_image',
-            qos_profile_sensor_data
-        )
+            f'{self.camera_name_}/processed_image', qos_profile_sensor_data)
 
-        self.get_logger().info(f'Image Processing node started for {self.camera_name_}')
+        self.get_logger().info(
+            f'Image Processing node started for {self.camera_name_} '
+            f'(lab: {self.get_parameter("lab").value})')
 
+    # =================================================================
+    # Plumbing - this part never changes between labs
+    # =================================================================
     def image_info_callback(self, info_msg):
         self.camera_info = info_msg
 
     def image_callback(self, image_msg):
         if self.camera_info is None:
             return
-        
-        cv_image = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding="bgr8")
-        
-        # ============================================================
-        # LAB - Color Spaces
-        # ============================================================
- 
-        # # Convert to Grayscale — single channel, brightness only
-        # gray_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-        # processed_image = gray_image
- 
-        # # Convert to HSV
-        # hsv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-        # processed_image = hsv_image
- 
-        # # Split HSV into individual channels and visualize one
-        # hsv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-        # h_channel, s_channel, v_channel = cv2.split(hsv_image)
-        # # Pick which channel to display: h_channel, s_channel, or v_channel
-        # processed_image = v_channel
-        
-        # # Full color imahe using HSV
-        # full_saturation = np.full_like(s_channel, 255)
-        # full_value = np.full_like(v_channel, 255)
-        # hue_colorized = cv2.merge([h_channel, full_saturation, full_value])
-        # processed_image = cv2.cvtColor(hue_colorized, cv2.COLOR_HSV2BGR)
- 
-        # ============================================================
-        # LAB — Blurring
-        # ============================================================
- 
-        # # Gaussian Blur — smooths the image using a weighted average
-        # kernel_size = 7
-        # processed_image = cv2.GaussianBlur(cv_image, (kernel_size, kernel_size), 0)
- 
-        # # Median Blur — replaces each pixel with the median of its neighbors
-        # # Excellent at removing salt-and-pepper noise while preserving edges
-        # kernel_size = 7
-        # processed_image = cv2.medianBlur(cv_image, kernel_size)
- 
-        # ============================================================
-        # LAB — Drawing on Images
-        # ============================================================
- 
-        # # Draw a line from top-left to center
-        # processed_image = cv_image
-        # height, width = cv_image.shape[:2]
-        # cv2.line(processed_image, (0, 0), (width // 2, height // 2),
-        #          color=(255, 0, 0), thickness=2)
-        
-        # # Draw a rectangle (simulating a bounding box)
-        # top_left = (width // 4, height // 4)
-        # bottom_right = (3 * width // 4, 3 * height // 4)
-        # cv2.rectangle(processed_image, top_left, bottom_right,
-        #               color=(0, 255, 0), thickness=2)
-        
-        # # Draw a filled circle at the center (simulating a detection center)
-        # center = (width // 2, height // 2)
-        # cv2.circle(processed_image, center, radius=5,
-        #            color=(0, 0, 255), thickness=-1)
-        
-        # # Add a text label
-        # cv2.putText(processed_image, 'Detection', (top_left[0], top_left[1] - 10),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
- 
-        # ============================================================
-        # LAB — Color Detection with Masks
-        # ============================================================
- 
-        # # Convert to HSV
-        hsv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-        
-        # Create a mask using the HSV color range
-        lower_bound = np.array(self.lower_hsv_)
-        upper_bound = np.array(self.upper_hsv_)
-        mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
-        
-        # Morphological Opening — removes small background noise
+
+        cv_image = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding='bgr8')
+
+        # Read 'lab' every frame so `ros2 param set` takes effect immediately
+        lab_name = self.get_parameter('lab').value
+        lab = self.labs.get(lab_name)
+        if lab is None:
+            self.get_logger().warn(
+                f'Unknown lab "{lab_name}". Options: {list(self.labs)}',
+                throttle_duration_sec=5.0)
+            return
+
+        processed_image = lab(cv_image)
+
+        # Single-channel results (gray, masks) are mono8; color results are bgr8
+        encoding = 'mono8' if processed_image.ndim == 2 else 'bgr8'
+        out_msg = self.bridge.cv2_to_imgmsg(processed_image, encoding=encoding)
+        out_msg.header = image_msg.header
+        self.img_pub.publish(out_msg)
+
+    # =================================================================
+    # LAB - Color Spaces
+    # =================================================================
+    def lab_original(self, img):
+        return img
+
+    def lab_gray(self, img):
+        # Single channel, brightness only
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    def lab_hsv(self, img):
+        # Raw HSV shown as if it were BGR - looks "wrong" on purpose,
+        # it shows that HSV is just three numbers per pixel with different meaning
+        return cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    def lab_hsv_channel(self, img):
+        h, s, v = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+        choice = self.get_parameter('hsv_channel').value
+        return {'h': h, 's': s, 'v': v}.get(choice, v)
+
+    def lab_hue_colorized(self, img):
+        # Keep only the hue; force saturation and value to max
+        h, s, v = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+        full_s = np.full_like(s, 255)
+        full_v = np.full_like(v, 255)
+        return cv2.cvtColor(cv2.merge([h, full_s, full_v]), cv2.COLOR_HSV2BGR)
+
+    # =================================================================
+    # LAB - Blurring
+    # =================================================================
+    def _kernel_size(self):
+        k = int(self.get_parameter('kernel_size').value)
+        return k if k % 2 == 1 else k + 1   # blur kernels must be odd
+
+    def lab_blur_gaussian(self, img):
+        # Weighted average of neighbours - smooth, general-purpose
+        k = self._kernel_size()
+        return cv2.GaussianBlur(img, (k, k), 0)
+
+    def lab_blur_median(self, img):
+        # Median of neighbours - kills salt-and-pepper noise, keeps edges
+        return cv2.medianBlur(img, self._kernel_size())
+
+    # =================================================================
+    # LAB - Drawing on Images
+    # =================================================================
+    def lab_drawing(self, img):
+        out = img.copy()   # draw on a copy, not the original frame
+        height, width = out.shape[:2]
+
+        cv2.line(out, (0, 0), (width // 2, height // 2), (255, 0, 0), 2)
+
+        top_left = (width // 4, height // 4)
+        bottom_right = (3 * width // 4, 3 * height // 4)
+        cv2.rectangle(out, top_left, bottom_right, (0, 255, 0), 2)
+
+        cv2.circle(out, (width // 2, height // 2), 5, (0, 0, 255), -1)
+
+        cv2.putText(out, 'Detection', (top_left[0], top_left[1] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        return out
+
+    # =================================================================
+    # LAB - Color Detection with Masks
+    # =================================================================
+    def make_mask(self, img):
+        """Shared by the mask and contours labs - this is the dependency
+        that was hidden when the code was commented in and out."""
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        lower = np.array(self.get_parameter('lower_hsv').value)
+        upper = np.array(self.get_parameter('upper_hsv').value)
+        mask = cv2.inRange(hsv, lower, upper)
+
         kernel = np.ones((5, 5), np.uint8)
+        # Opening: removes small specks of background noise
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=2)
-        
-        # Morphological Closing — fills holes and gaps inside the object
+        # Closing: fills holes and gaps inside the object
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=5)
-        
-        processed_image = mask
- 
-        # ============================================================
-        # LAB — Contour Detection
-        # ============================================================
- 
-        # # Find contours in the clean mask
-        # processed_image = cv_image
-        # contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        # if contours:
-        #     # Find the largest contour by area
-        #     largest_contour = max(contours, key=cv2.contourArea)
-        
-        #     # Get the minimum enclosing circle — center and radius
-        #     ((x, y), radius) = cv2.minEnclosingCircle(largest_contour)
-        
-        #     # Only process if the detected object is big enough
-        #     if radius > 10.0:
-        #         # Get the bounding rectangle
-        #         x_rect, y_rect, w, h = cv2.boundingRect(largest_contour)
-        
-        #         # Draw the bounding box (green)
-        #         cv2.rectangle(processed_image, (x_rect, y_rect),
-        #                       (x_rect + w, y_rect + h), (0, 255, 0), 2)
-        
-        #         # Draw the center point (red, filled)
-        #         cv2.circle(processed_image, (int(x), int(y)), 3,
-        #                    (0, 0, 255), -1)
- 
-        processed_image_msg = self.bridge.cv2_to_imgmsg(processed_image, encoding='passthrough')
-        processed_image_msg.header = image_msg.header
-        self.img_pub.publish(processed_image_msg)
+        return mask
+
+    def lab_mask(self, img):
+        return self.make_mask(img)
+
+    # =================================================================
+    # LAB - Contour Detection
+    # =================================================================
+    def lab_contours(self, img):
+        mask = self.make_mask(img)   # explicit: contours need a mask first
+        out = img.copy()
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
+                                       cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            largest = max(contours, key=cv2.contourArea)
+            (x, y), radius = cv2.minEnclosingCircle(largest)
+
+            if radius > 10.0:   # ignore tiny blobs
+                xr, yr, w, h = cv2.boundingRect(largest)
+                cv2.rectangle(out, (xr, yr), (xr + w, yr + h), (0, 255, 0), 2)
+                cv2.circle(out, (int(x), int(y)), 3, (0, 0, 255), -1)
+        return out
 
 
 def main(args=None):
@@ -181,6 +211,7 @@ def main(args=None):
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
