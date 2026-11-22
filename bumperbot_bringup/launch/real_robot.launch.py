@@ -23,11 +23,11 @@ def generate_launch_description():
         ),
     )
 
-    camera_driver = IncludeLaunchDescription(
+    stereo_camera = IncludeLaunchDescription(
         os.path.join(
-            get_package_share_directory("bumperbot_bringup"),
+            get_package_share_directory("bumperbot_vision"),
             "launch",
-            "camera.launch.py"
+            "stereo_camera.launch.py"
         ),
     )
 
@@ -104,7 +104,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_slam_arg,
         hardware_interface,
-        camera_driver,
+        stereo_camera,
         laser_driver,
         controller,
         joystick,
