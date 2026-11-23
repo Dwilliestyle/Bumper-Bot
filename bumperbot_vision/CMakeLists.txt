@@ -74,6 +74,11 @@ add_executable(optical_flow
 )
 ament_target_dependencies(optical_flow ${dependencies})
 
+add_executable(point_cloud_processing
+  src/point_cloud_processing.cpp
+)
+ament_target_dependencies(point_cloud_processing ${dependencies})
+
 add_executable(bag_of_words
   src/bag_of_words.cpp
 )
@@ -95,6 +100,7 @@ install(TARGETS
   stereo_vision
   feature_detector
   optical_flow
+  point_cloud_processing
   bag_of_words
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -106,6 +112,7 @@ install(PROGRAMS
   ${PROJECT_NAME}/feature_detector.py
   ${PROJECT_NAME}/stereo_camera_node.py
   ${PROJECT_NAME}/optical_flow.py
+  ${PROJECT_NAME}/point_cloud_processing.py
   ${PROJECT_NAME}/bag_of_words.py
   DESTINATION lib/${PROJECT_NAME}
 )
