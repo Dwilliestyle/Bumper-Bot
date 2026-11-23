@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="media/20261013_081116.jpg" width="850">
+  <img src="media/20261119_081655.jpg" width="850">
 </p>
 
 Pictured: Bumperbot constructed by Dwilliestyle, based on instructions from Antonio Brandi's Udemy courses. 
