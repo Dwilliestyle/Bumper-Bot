@@ -82,6 +82,13 @@ ament_target_dependencies(point_cloud_processing ${dependencies})
 add_executable(bag_of_words
   src/bag_of_words.cpp
 )
+
+add_executable(point_cloud_processing src/point_cloud_processing.cpp)
+ament_target_dependencies(point_cloud_processing ${dependencies})
+target_include_directories(point_cloud_processing PUBLIC ${PCL_INCLUDE_DIRS})
+target_link_libraries(point_cloud_processing ${PCL_LIBRARIES}
+)
+
 ament_target_dependencies(bag_of_words ${dependencies})
 target_link_libraries(bag_of_words
   ${OpenCV_LIBS}
