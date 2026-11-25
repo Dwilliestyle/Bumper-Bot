@@ -2,7 +2,7 @@
   <img src="media/20261119_081655.jpg" width="850">
 </p>
 
-Pictured: Bumperbot constructed by Dwilliestyle, based on instructions from Antonio Brandi's Udemy courses. 
+Pictured: Bumperbot constructed by Dwilliestyle, based on instructions from Antonio Brandi's Udemy courses, including a USB stereo camera. 
 
 Bumperbot is an open-source 3D printed self-driving robot powered by ROS 2. Its simple design and low cost make it an excellent learning platform, featured in the following online courses:
 * [Self Driving and ROS 2 - Learn by Doing! Odometry & Control
