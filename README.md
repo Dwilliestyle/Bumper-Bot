@@ -28,6 +28,7 @@ Bumperbot is an open-source 3D printed self-driving robot powered by ROS 2. Its 
 - :triangular_ruler: [`bumperbot_planning`](./bumperbot_planning/): Contains the Path Planners for the [nav2_planner](https://docs.nav2.org/configuration/packages/configuring-planner-server.html).
 - :paperclip: [`bumperbot_py_examples`](./bumperbot_py_examples/): Contains ROS 2 templates for developing with Python.
 - :hammer_and_pick: [`bumperbot_utils`](./bumperbot_utils/): Contains some utilities and tools.
+- 📷: [`bumperbot_vision`](./bumperbot_vision/): Contains the nodes for vision and perception.
 
 ## :building_construction: Usage
 
