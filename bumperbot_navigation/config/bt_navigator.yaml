@@ -1,5 +1,6 @@
 bt_navigator:
   ros__parameters:
+    default_nav_to_pose_bt_xml: "/home/don/bumperbot_ws/install/bumperbot_navigation/share/bumperbot_navigation/behavior_tree/bumperbot_nav.xml"
     use_sim_time: true
     global_frame: map
     robot_base_frame: base_link
