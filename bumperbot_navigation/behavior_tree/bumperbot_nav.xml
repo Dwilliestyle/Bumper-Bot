@@ -1,0 +1,49 @@
+<!--
+  Bumperbot navigate-to-pose behavior tree (Nav2 Jazzy / BehaviorTree.CPP v4)
+
+  Layer 1: plan + follow, replanning at 1 Hz
+  Layer 2: if planning or following fails, clear that costmap and try again once
+  Layer 3: if it still fails, run the full recovery sequence, then retry (up to 3 times)
+-->
+<root BTCPP_format="4" main_tree_to_execute="BumperbotNav">
+  <BehaviorTree ID="BumperbotNav">
+
+    <!-- Outer layer: normal navigation, falling back to recovery actions up to 3 times -->
+    <RecoveryNode number_of_retries="3" name="NavigateRecovery">
+
+      <!-- Normal navigation: plan and follow at the same time -->
+      <PipelineSequence name="NavigateWithReplanning">
+
+        <!-- Replan once per second -->
+        <RateController hz="1.0">
+          <!-- If planning fails, clear the global costmap and try once more -->
+          <RecoveryNode number_of_retries="1" name="ComputePathRecovery">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+            <ClearEntireCostmap name="ClearGlobalCostmap-Context"
+                                service_name="global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+        </RateController>
+
+        <!-- If following the path fails, clear the local costmap and try once more -->
+        <RecoveryNode number_of_retries="1" name="FollowPathRecovery">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <ClearEntireCostmap name="ClearLocalCostmap-Context"
+                              service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+
+      </PipelineSequence>
+
+      <!-- Recovery actions, run in order. If one fails, the rest are skipped. -->
+      <Sequence name="RecoveryActions">
+        <ClearEntireCostmap name="ClearLocal"
+                            service_name="local_costmap/clear_entirely_local_costmap"/>
+        <ClearEntireCostmap name="ClearGlobal"
+                            service_name="global_costmap/clear_entirely_global_costmap"/>
+        <Spin spin_dist="1.57"/>                              <!-- 90 degree look-around -->
+        <Wait wait_duration="2.0"/>                           <!-- let a pet/person move -->
+        <BackUp backup_dist="0.20" backup_speed="0.10"/>      <!-- small, gentle reverse -->
+      </Sequence>
+
+    </RecoveryNode>
+  </BehaviorTree>
+</root>
