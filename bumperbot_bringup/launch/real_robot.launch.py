@@ -107,6 +107,14 @@ def generate_launch_description():
         condition=IfCondition(no_slam)
     )
 
+    local_localization = IncludeLaunchDescription(
+        os.path.join(
+            get_package_share_directory("bumperbot_localization"),
+            "launch",
+            "local_localization.launch.py"
+        ),
+    )
+
     slam = IncludeLaunchDescription(
         os.path.join(
             get_package_share_directory("bumperbot_mapping"),
@@ -147,6 +155,7 @@ def generate_launch_description():
         joystick,
         imu_driver_node,
         localization,
+        local_localization,
         slam,
         visual_slam,
         navigation
