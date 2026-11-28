@@ -15,6 +15,7 @@ endif()
 
 install(PROGRAMS
   ${PROJECT_NAME}/ball_follower.py
+  ${PROJECT_NAME}/bumperbot_patrol.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
